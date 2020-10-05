@@ -28,7 +28,7 @@ class ExampleApp extends StatefulWidget {
 
 class _ExampleAppState extends State<ExampleApp> {
   AudioCache audioCache = AudioCache();
-  AudioPlayer advancedPlayer = AudioPlayer();
+  AudioPlayer advancedPlayer = AudioPlayer(playerId: "3034");
   String localFilePath;
 
   @override
@@ -45,6 +45,7 @@ class _ExampleAppState extends State<ExampleApp> {
       }
       advancedPlayer.startHeadlessService();
     }
+
   }
 
   Future _loadFile() async {

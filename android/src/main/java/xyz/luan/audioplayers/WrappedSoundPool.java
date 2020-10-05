@@ -142,7 +142,10 @@ public class WrappedSoundPool extends Player {
             this.paused = true;
         }
     }
-
+    @Override
+    Integer getAudioSessionId(){
+        return soundId;
+    }
     @Override
     void setUrl(final String url, final boolean isLocal, Context context) {
         if (this.url != null && this.url.equals(url)) {

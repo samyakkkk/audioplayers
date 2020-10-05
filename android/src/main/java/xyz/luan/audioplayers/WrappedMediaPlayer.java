@@ -139,6 +139,7 @@ public class WrappedMediaPlayer extends Player implements MediaPlayer.OnPrepared
         }
     }
 
+
     /**
      * Getter methods
      */
@@ -156,6 +157,11 @@ public class WrappedMediaPlayer extends Player implements MediaPlayer.OnPrepared
     @Override
     String getPlayerId() {
         return this.playerId;
+    }
+
+    @Override
+    Integer getAudioSessionId(){
+       return  this.player!=null? this.player.getAudioSessionId():null;
     }
 
     @Override

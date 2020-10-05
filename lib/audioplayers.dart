@@ -163,6 +163,9 @@ class AudioPlayer {
   final StreamController<PlayerControlCommand> _commandController =
       StreamController<PlayerControlCommand>.broadcast();
 
+  final StreamController _amplitudeController = StreamController<int>.broadcast();
+
+
   PlayingRouteState _playingRouteState = PlayingRouteState.SPEAKERS;
 
   /// Reference [Map] with all the players created by the application.
@@ -238,6 +241,8 @@ class AudioPlayer {
   ///
   /// Events are sent user tap system remote control command.
   Stream<PlayerControlCommand> get onPlayerCommand => _commandController.stream;
+
+  Stream<int> get onAmplitudeUpdate => _amplitudeController.stream;
 
   /// Handler of changes on player state.
   @deprecated
@@ -618,6 +623,10 @@ class AudioPlayer {
         break;
       case 'audio.onGotPreviousTrackCommand':
         player._commandController.add(PlayerControlCommand.PREVIOUS_TRACK);
+        break;
+      case "audio.OnAmplitudeUpdate":
+         print("value received - $value");
+        player._amplitudeController.add(value);
         break;
       default:
         _log('Unknown method ${call.method} ');

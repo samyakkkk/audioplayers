@@ -8,7 +8,7 @@ abstract class Player {
     }
 
     abstract String getPlayerId();
-
+    abstract Integer getAudioSessionId();
     abstract void play(Context context);
 
     abstract void stop();
