@@ -183,6 +183,7 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
         return mVisulalizers.get(playerId);
     }
     private void updateAmplitude(Visualizer visualizer, final String playerId){
+        visualizer.setEnabled(false);
         visualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
 
         visualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
