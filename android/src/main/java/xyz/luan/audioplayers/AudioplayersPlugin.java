@@ -78,6 +78,7 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
             Log.d("Session ID", Integer.toString(player.getAudioSessionId()));
            visualizer  = getVisualizer(playerId, player.getAudioSessionId());
         }
+        Log.d("Total Media Players", Integer.toString(mediaPlayers.size()));
         switch (call.method) {
             case "play": {
                 Log.d("step", "2");
@@ -229,6 +230,12 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
     }
 
     public void handleCompletion(Player player) {
+        Log.d("process", "playing completed");
+        Visualizer visualizer = mVisulalizers.get(player.getPlayerId());
+        if(visualizer!=null){
+            visualizer.setEnabled(false);
+            visualizer.release();
+        }
         channel.invokeMethod("audio.onComplete", buildArguments(player.getPlayerId(), true));
     }
 
@@ -297,12 +304,12 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
             boolean nonePlaying = true;
             for (Player player : mediaPlayers.values()) {
                 if (!player.isActuallyPlaying()) {
-                    Visualizer visualizer = mVisualizers.get(player.getPlayerId());
-                    if(visualizer!=null){
-                        Log.d("Process", "disabling visulalizer");
-                        visualizer.setEnabled(false);
-//                        visualizer.release();
-                    }
+//                    Visualizer visualizer = mVisualizers.get(player.getPlayerId());
+//                    if(visualizer!=null){
+//                        Log.d("Process", "disabling visulalizer");
+//                        visualizer.setEnabled(false);
+////                        visualizer.release();
+//                    }
 
 
                     continue;
