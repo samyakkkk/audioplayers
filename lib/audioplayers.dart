@@ -625,7 +625,6 @@ class AudioPlayer {
         player._commandController.add(PlayerControlCommand.PREVIOUS_TRACK);
         break;
       case "audio.OnAmplitudeUpdate":
-         print("value received - $value");
         player._amplitudeController.add(value);
         break;
       default:
