@@ -4,8 +4,12 @@ import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.audiofx.Visualizer;
 import android.os.Build;
 import android.os.PowerManager;
+import android.util.Log;
+
+import androidx.arch.core.util.Function;
 
 import java.io.IOException;
 
@@ -44,13 +48,17 @@ public class WrappedMediaPlayer extends Player implements MediaPlayer.OnPrepared
         if (!objectEquals(this.url, url)) {
             this.url = url;
             if (this.released) {
+                Log.d("set Url", "Player is released");
                 this.player = createPlayer(context);
                 this.released = false;
             } else if (this.prepared) {
+                Log.d("set url", "player is prepared");
                 this.player.reset();
                 this.prepared = false;
             }
-
+            if(player==null){
+                Log.d("set Url", "player is null");
+            }
             this.setSource(url);
             this.player.setVolume((float) volume, (float) volume);
             this.player.setLooping(this.releaseMode == ReleaseMode.LOOP);
@@ -161,6 +169,7 @@ public class WrappedMediaPlayer extends Player implements MediaPlayer.OnPrepared
 
     @Override
     Integer getAudioSessionId(){
+        if(this.player==null)Log.d("Get audio sessionId", "Player is null");
        return  this.player!=null? this.player.getAudioSessionId():null;
     }
 
@@ -178,11 +187,13 @@ public class WrappedMediaPlayer extends Player implements MediaPlayer.OnPrepared
         if (!this.playing) {
             this.playing = true;
             if (this.released) {
+                Log.d("play", "player is released");
                 this.released = false;
                 this.player = createPlayer(context);
                 this.setSource(url);
                 this.player.prepareAsync();
             } else if (this.prepared) {
+                Log.d("play", "player is prepared");
                 this.player.start();
                 this.ref.handleIsPlaying(this);
             }
@@ -232,6 +243,9 @@ public class WrappedMediaPlayer extends Player implements MediaPlayer.OnPrepared
         }
     }
 
+
+
+
     // seek operations cannot be called until after
     // the player is ready.
     @Override
@@ -248,8 +262,11 @@ public class WrappedMediaPlayer extends Player implements MediaPlayer.OnPrepared
 
     @Override
     public void onPrepared(final MediaPlayer mediaPlayer) {
+        Log.d("process", "Player is now prepared");
         this.prepared = true;
         ref.handleDuration(this);
+        Visualizer visualizer = new Visualizer(mediaPlayer.getAudioSessionId());
+        ref.onVisualizerCreated(visualizer, playerId);
         if (this.playing) {
             this.player.start();
             ref.handleIsPlaying(this);

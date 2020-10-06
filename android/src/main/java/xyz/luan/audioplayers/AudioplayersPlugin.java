@@ -1,6 +1,7 @@
 package xyz.luan.audioplayers;
 
 import android.content.Context;
+import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
 import android.os.Handler;
 import android.util.Log;
@@ -19,17 +20,18 @@ import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 
-public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
+public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin, OnVisualizerCreationListener {
 
     private static final Logger LOGGER = Logger.getLogger(AudioplayersPlugin.class.getCanonicalName());
 
     private MethodChannel channel;
     private final Map<String, Player> mediaPlayers = new HashMap<>();
-    private final Map<String, Visualizer> mVisulalizers = new HashMap<>();
+//    private final Map<String, Visualizer> mVisulalizers = new HashMap<>();
     private final Handler handler = new Handler();
     private Runnable positionUpdates;
     private Context context;
     private boolean seekFinish;
+    private  Visualizer visualizer;
 
     public static void registerWith(final Registrar registrar) {
         final MethodChannel channel = new MethodChannel(registrar.messenger(), "xyz.luan/audioplayers");
@@ -71,12 +73,11 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
         final String playerId = call.argument("playerId");
         final String mode = call.argument("mode");
         final Player player = getPlayer(playerId, mode);
-        Visualizer visualizer = null;
-        if(player.getAudioSessionId()!=null){
-           visualizer  = getVisualizer(playerId, player.getAudioSessionId());
-        }
         switch (call.method) {
             case "play": {
+                if(visualizer!=null){
+                    visualizer.release();
+                }
                 final String url = call.argument("url");
                 final double volume = call.argument("volume");
                 final Integer position = call.argument("position");
@@ -86,8 +87,6 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
                 player.configAttributes(respectSilence, stayAwake, context.getApplicationContext());
                 player.setVolume(volume);
                 player.setUrl(url, isLocal, context.getApplicationContext());
-                final Visualizer visualizerNew = getVisualizer(playerId, player.getAudioSessionId());
-                updateAmplitude(visualizerNew, playerId);
                 if (position != null && !mode.equals("PlayerMode.LOW_LATENCY")) {
                     player.seek(position);
                 }
@@ -95,6 +94,7 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
                 break;
             }
             case "resume": {
+
                 visualizer.setEnabled(true);
                 player.play(context.getApplicationContext());
                 break;
@@ -175,19 +175,17 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
         }
         return mediaPlayers.get(playerId);
     }
-    private Visualizer getVisualizer(String playerId, Integer audioSessionID){
-        if(!mVisulalizers.containsKey(playerId)){
-            Visualizer visualizer = new Visualizer(audioSessionID);
-            mVisulalizers.put(playerId, visualizer);
-        }
-        return mVisulalizers.get(playerId);
-    }
-    private void updateAmplitude(Visualizer visualizer, final String playerId){
-        visualizer.setEnabled(false);
+//    private Visualizer getVisualizer(String playerId, Integer audioSessionID){
+//        if(!mVisulalizers.containsKey(playerId)){
+//            Visualizer visualizer = new Visualizer(audioSessionID);
+//            mVisulalizers.put(playerId, visualizer);
+//        }
+//        return mVisulalizers.get(playerId);
+//    }
+    private void updateAmplitude(final String playerId){
         visualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
 
         visualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
-
             @Override
             public void onWaveFormDataCapture(Visualizer visualizer, byte[] bytes,
                                               int samplingRate) {
@@ -204,6 +202,7 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
 
             }
         }, Visualizer.getMaxCaptureRate() / 2, true, false);
+        Log.d("Visualizer", "Enabling True in update amplitude");
         visualizer.setEnabled(true);
     }
     public void handleIsPlaying(Player player) {
@@ -215,10 +214,11 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
     }
 
     public void handleCompletion(Player player) {
-        Visualizer visualizer = mVisulalizers.get(player.getPlayerId());
+//        Visualizer visualizer = mVisulalizers.get(player.getPlayerId());
         if(visualizer!=null){
-            visualizer.setEnabled(false);
+            Log.d("Setting", "Updating state to false on completion");
             visualizer.release();
+//            visualizer.setEnabled(false);
         }
         channel.invokeMethod("audio.onComplete", buildArguments(player.getPlayerId(), true));
     }
@@ -235,7 +235,7 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
         if (positionUpdates != null) {
             return;
         }
-        positionUpdates = new UpdateCallback(mediaPlayers, channel, handler, this, mVisulalizers);
+        positionUpdates = new UpdateCallback(mediaPlayers, channel, handler, this);
         handler.post(positionUpdates);
     }
 
@@ -251,23 +251,28 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
         return result;
     }
 
+    @Override
+    public void onVisualizerCreated(Visualizer visualizer, String playerId) {
+        this.visualizer = visualizer;
+        updateAmplitude(playerId);
+
+    }
+
     private static final class UpdateCallback implements Runnable {
 
         private final WeakReference<Map<String, Player>> mediaPlayers;
         private final WeakReference<MethodChannel> channel;
         private final WeakReference<Handler> handler;
         private final WeakReference<AudioplayersPlugin> audioplayersPlugin;
-        private final WeakReference<Map<String, Visualizer>> mVisualizers;
 
         private UpdateCallback(final Map<String, Player> mediaPlayers,
                                final MethodChannel channel,
                                final Handler handler,
-                               final AudioplayersPlugin audioplayersPlugin, final Map<String, Visualizer> mVisualizers) {
+                               final AudioplayersPlugin audioplayersPlugin) {
             this.mediaPlayers = new WeakReference<>(mediaPlayers);
             this.channel = new WeakReference<>(channel);
             this.handler = new WeakReference<>(handler);
             this.audioplayersPlugin = new WeakReference<>(audioplayersPlugin);
-            this.mVisualizers = new WeakReference<>(mVisualizers);
         }
 
         @Override
@@ -276,7 +281,6 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
             final MethodChannel channel = this.channel.get();
             final Handler handler = this.handler.get();
             final AudioplayersPlugin audioplayersPlugin = this.audioplayersPlugin.get();
-            final Map<String, Visualizer> mVisualizers =this.mVisualizers.get();
 
             if (mediaPlayers == null || channel == null || handler == null || audioplayersPlugin == null) {
                 if (audioplayersPlugin != null) {
@@ -328,4 +332,6 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
         return (int)amplitude;
     }
 }
+
+
 

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:audioplayers/audio_cache.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:audioplayers_example/playerButton.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
@@ -18,7 +19,7 @@ const kUrl2 = 'https://luan.xyz/files/audio/nasa_on_a_mission.mp3';
 const kUrl3 = 'http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio1xtra_mf_p';
 
 void main() {
-  runApp(MaterialApp(home: ExampleApp()));
+  runApp(MaterialApp(home: PlayerButton()));
 }
 
 class ExampleApp extends StatefulWidget {

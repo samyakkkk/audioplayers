@@ -1,6 +1,9 @@
 package xyz.luan.audioplayers;
 
 import android.content.Context;
+
+import androidx.arch.core.util.Function;
+
 abstract class Player {
 
     protected static boolean objectEquals(Object o1, Object o2) {
@@ -34,6 +37,7 @@ abstract class Player {
     abstract boolean isActuallyPlaying();
 
     abstract void setPlayingRoute(String playingRoute, Context context);
+
 
     /**
      * Seek operations cannot be called until after the player is ready.
