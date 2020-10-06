@@ -202,7 +202,6 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin, OnV
 
             }
         }, Visualizer.getMaxCaptureRate() / 2, true, false);
-        Log.d("Visualizer", "Enabling True in update amplitude");
         visualizer.setEnabled(true);
     }
     public void handleIsPlaying(Player player) {
@@ -214,11 +213,8 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin, OnV
     }
 
     public void handleCompletion(Player player) {
-//        Visualizer visualizer = mVisulalizers.get(player.getPlayerId());
         if(visualizer!=null){
-            Log.d("Setting", "Updating state to false on completion");
             visualizer.release();
-//            visualizer.setEnabled(false);
         }
         channel.invokeMethod("audio.onComplete", buildArguments(player.getPlayerId(), true));
     }
