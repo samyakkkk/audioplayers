@@ -216,6 +216,10 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin, OnV
         if(visualizer!=null){
             visualizer.release();
         }
+        Map<String, Object> result = new HashMap<>();
+        result.put("value", -1);
+        result.put("playerId", player.getPlayerId());
+        channel.invokeMethod("audio.OnAmplitudeUpdate", result);
         channel.invokeMethod("audio.onComplete", buildArguments(player.getPlayerId(), true));
     }
 
